@@ -12,7 +12,7 @@ class ConnectionHolder:
             self.connection.flush()
             self.isConnected = True
         except Exception as e:
-            pass
+            print('add chonnection error', e)
         
     @classmethod
     def changePort(cls, com:str, baudrate=9600, timeout=1, parity='N'):

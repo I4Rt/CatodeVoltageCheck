@@ -1,0 +1,149 @@
+{%extends 'base.html'%}
+
+
+{%block styles%}
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
+    <link href="css/main.css"  rel="stylesheet" />
+    <link href="css/vault_card.css"  rel="stylesheet" />
+    <link href="css/export.css"  rel="stylesheet" />
+
+{%endblock%}
+
+{%block main%}
+    <button class="export" onclick="openExportWindow()">
+
+    </button>
+    <div class="export_layer">
+        <div class="export_window">
+            <div class="export_top_text"><b>Экспорт данных</b></div>
+            <div class="export_row">
+                <div class="export_text">Начало</div>
+                <input type="date" class="export_date_input" id="start_date">
+            </div>
+            <div class="export_row">
+                <div class="export_text">Окончание</div>
+                <div class="consuming_row">
+                    <button class="export_set_today_button" onclick="setToday()"></button>
+                    <input type="date" class="export_date_input" id="end_date">
+                </div>
+            </div>
+            <div class="export_row export_flex_end_row">
+                <button class="cancel_export_button" onclick="closeExportWindow()">Отмена</button>
+                <button class="start_export_button" onclick="getExport()">Экспорт</button>
+            </div>
+        </div>
+    </div>
+    <div class="container main_wrapler">
+        {% for vault_device in devices_data %}
+            <div class="vault_card">
+                <div class="top_text"><b>шиберная_заслонка_{{vault_device['info']['id']}}</b></div>
+                <div class="status_icon {% if vault_device['is_consistenced'] %}ok{% else %}warn{% endif %}" id="status_icon_{{vault_device['info']['id']}}"></div>
+
+                <div class="vault_display">
+                    <div class="open_text">открыть</div>
+                    <div class="close_text">закрыть</div>
+                    <div class="vault_line" id="vault_line_{{vault_device['info']['id']}}"></div>
+                    <div class="vault_position_text" id="vault_position_text_{{vault_device['info']['id']}}">
+                        {% if vault_device['last_change_event'] %}
+                            {{(vault_device['last_change_event']['value']*90/58000)| round(2)}}°
+                        {% else %}
+                                ?°
+                        {% endif %}
+                        
+                        
+                    </div>
+                    <img class="vault_position_loader" id="vault_position_loader_{{vault_device['info']['id']}}" src="../img/loader.gif">
+                    
+                </div>
+                <div class="vault_change_canvas" id="#vault_change_canvas_{{vault_device['info']['id']}}">
+                </div>
+
+                <div class="vault_setting_box">
+                    <div class="vault_setting_row">
+                        <div class="vault_text">Устройство №</div>
+                        <input type="number" value="{{vault_device['info']['devId']}}" class="vault_number_input" disabled>
+                    </div>
+                    <div class="vault_setting_row">
+                        <div class="vault_text">Изменение, мс</div>
+                        <input type="number" max="58000", min="-58000" class="vault_number_input" id="vault_change_input_{{vault_device['info']['id']}}" oninput="togle_apply_btn({{vault_device['info']['id']}}, false)"
+                        {% if not vault_device["is_consistenced"] %}
+                                disabled
+                        {% endif %}
+                        >
+                    </div>
+                    <div class="vault_setting_row">
+                        <button type="number" class="vault_apply_btn" id="vault_apply_btn_{{vault_device['info']['id']}}" onclick="changeVaultValue({{vault_device['info']['id']}}, parseInt($('#vault_change_input_{{vault_device['info']['id']}}').val()))" disabled
+                        {% if not vault_device["is_consistenced"] %}
+                                disabled
+                        {% endif %}
+                        >
+                            Применить
+                        </button>
+                    </div>
+                    <div class="vault_setting_row">
+                        <button type="number" class="vault_reset_btn" id="vault_reset_btn_{{vault_device['info']['id']}}" onclick="resetVault({{vault_device['info']['id']}})" >
+                            Синхронизировать в 0
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        
+    </div>
+{%endblock%}
+
+{%block scripts%}
+    <script>
+        const FULL_TIME = 58000
+        const ANGLE_AMMOUNT = 90
+        var devices_data=JSON.parse('{{ devices_data | tojson}}')
+    </script>
+    <script src="js/logic/main_page_fetch_actions.js"></script>
+
+    <script src="js/logic/vault_card_actions.js"></script>
+    <script src="js/logic/export_actions.js"></script>
+    <script src="js/logic/small_chart_actions.js"></script>
+    
+    
+    <script>
+
+        /*
+        {% if not is_consistenced %}
+            let res = confirm('Программа была перезапущена\nЧтобы продолжить работу сбросьте положение заслонок\nСбросить сейчас?' )
+            if(res){
+                fetchResetVaultGates()
+                alert('Запрос выполняется, страница сейчас перезаугрзится')
+            }
+        {% endif %}
+        */
+
+        // Инициализация графика
+
+                /**
+        * Запускает обновления графика каждую секунду с рандомным количеством интервалов
+        * @param {string} elementId - ID элемента с графиком
+        */
+        function startUpdates(elementId) {
+            setInterval(async () => {
+                const { intervals, values } = await fetchVaultChartData(elementId); // Получаем новые данные с сервера
+                updateChart(elementId, intervals, values); // Обновляем график новыми данными
+            }, 5000); // Обновление раз в секунду
+        }
+
+        async function initializeChart(id) {
+            const data = await fetchVaultChartData(id); // Получаем данные с сервера
+            const { intervals, values } = data; // Извлекаем intervals и values из ответа
+            configureChart(id, intervals, values); // Настроим график с полученными данными
+            startUpdates(id); // Запускаем обновления с реальными данными
+        }
+        
+        setTimeout(()=>{
+            for (id in cur_times){
+                initializeChart(id)
+            }
+        },
+        500)
+
+    </script>
+{%endblock%}

@@ -1,0 +1,14 @@
+.main_wrapler{
+    padding:2% 5% 0% 5%;
+    width:100%;
+    
+    display: flex;
+    /* justify-content: center; */
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
+    overflow-x: auto;
+
+    
+    height: fit-content;
+}

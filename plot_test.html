@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Line Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #chart {
+            width: 200px;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chart"></div>
+
+    <script>
+        const FULL_TIME = 58000
+        const ANGLE_AMMOUNT = 90
+
+        /**
+         * Генерирует случайное количество интервалов и их длительности
+         * @param {number} minDuration - Минимальная длительность одного интервала (в секундах)
+         * @param {number} maxDuration - Максимальная длительность одного интервала (в секундах)
+         * @returns {object} Объект с массивами интервалов (время) и значений
+         */
+        function generateRandomIntervals(minDuration = 30, maxDuration = 7200) {
+            const intervalCount = Math.floor(Math.random() * 24) + 1; // От 1 до 24 интервалов
+            const intervals = [];
+            const values = [];
+
+            let currentTime = Math.floor(Date.now() / 1000); // Начинаем с текущего времени в секундах
+
+            for (let i = 0; i < intervalCount; i++) {
+                const duration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration; // Рандомная длительность
+                intervals.push(currentTime); // Начало интервала
+                currentTime += duration; // Конец интервала = начало + длительность
+                values.push(Math.floor(Math.random() * 91)); // Случайное значение (0-90)
+            }
+
+            intervals.push(currentTime); // Добавляем последнее время
+
+            return { intervals, values };
+        }
+
+        /**
+         * Подготавливает данные для ступенчатого графика
+         * @param {number[]} intervals - Массив временных интервалов
+         * @param {number[]} values - Массив значений
+         * @returns {object} Объект с массивами stepX и stepY
+         */
+        function prepareStepData(intervals, values) {
+            const stepX = [];
+            const stepY = [];
+            for (let i = 0; i < values.length; i++) {
+                stepX.push(new Date(intervals[i] * 1000)); // Преобразуем временную метку в объект Date
+                stepY.push(values[i]);
+            }
+            return { stepX, stepY };
+        }
+
+        function configureChart(elementId, intervals, values) {
+            const { stepX, stepY } = prepareStepData(intervals, values);
+        
+            const data = [{
+                x: stepX,
+                y: stepY,
+                type: 'scatter',
+                mode: 'lines',
+                line: { shape: 'hv', color: 'white', width: 2 },
+            }];
+        
+            const layout = {
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                xaxis: {
+                    visible: false,
+                    range: [new Date(Date.now() - 2 * 60 * 60 * 1000), new Date()]
+                },
+                yaxis: { visible: false, range: [-5, 95] },
+                paper_bgcolor: 'rgb(71,71,71)',
+                plot_bgcolor: 'rgb(71,71,71)',
+            };
+        
+            const config = {
+                responsive: true,
+                displayModeBar: false,
+            };
+        
+            // Используем Plotly.react вместо Plotly.newPlot
+            Plotly.react(elementId, data, layout, config);
+        }
+        
+        function updateChart(elementId, intervals, values) {
+            const { stepX, stepY } = prepareStepData(intervals, values);
+        
+            // Добавляем последнее значение в данные
+            const currentTime = Math.floor(Date.now() / 1000);
+            stepX.push(new Date(currentTime * 1000));
+            stepY.push(values[values.length - 1]);
+        
+            const updatedLayout = {
+                xaxis: {
+                    visible: false,
+                    range: [new Date(Date.now() - 2 * 60 * 60 * 1000), new Date()] // Обновляем диапазон для последних 24 часов
+                }
+            };
+        
+            // Используем Plotly.update для обновления графика
+            Plotly.update(elementId, { x: [stepX], y: [stepY] }, updatedLayout);
+        }
+        
+        /**
+         * Запускает обновления графика каждую секунду с рандомным количеством интервалов
+         * @param {string} elementId - ID элемента с графиком
+         */
+        function startUpdates(elementId) {
+            setInterval(async () => {
+                const { intervals, values } = await fetchData(1); // Получаем новые данные с сервера
+                updateChart(elementId, intervals, values); // Обновляем график новыми данными
+            }, 1000); // Обновление раз в секунду
+        }
+
+        /**
+         * Делает POST-запрос на указанный URL с параметром vaultId
+         * @param {number} vaultId - Идентификатор хранилища (vaultId)
+         * @returns {Promise<object>} - Промис, который разрешается в объект с данными
+         */
+        async function fetchData(vaultId) {
+            const url = `http://localhost:3031/getData?vaultId=${vaultId}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (Array.isArray(data)) {
+                    const intervals = data.map(item => item.time_seconds); // Временные метки
+                    const values = data.map(item => item.value/FULL_TIME*ANGLE_AMMOUNT); // Значения
+                    return { intervals, values };
+                } else {
+                    throw new Error('Received data is not an array');
+                }
+            } catch (error) {
+                console.error('Ошибка при запросе данных:', error);
+                throw error; // Прокидываем ошибку дальше
+            }
+        }
+
+        // Инициализация графика
+        async function initializeChart() {
+            const data = await fetchData(1); // Получаем данные с сервера
+            const { intervals, values } = data; // Извлекаем intervals и values из ответа
+            configureChart('chart', intervals, values); // Настроим график с полученными данными
+            startUpdates('chart'); // Запускаем обновления с реальными данными
+        }
+        initializeChart()
+    </script>
+</body>
+</html>

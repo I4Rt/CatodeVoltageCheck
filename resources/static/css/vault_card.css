@@ -1,0 +1,178 @@
+
+.vault_card{
+    position: relative;
+    width: 280px;
+    min-width: 280px;
+    
+    height: fit-content;
+    padding:20px;
+
+    border-radius: 10px;
+    border: 1px solid rgb(51, 51, 51);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 20px;
+    padding-top: 10px;
+    border-top: 20px solid rgb(51, 51, 51);
+}
+
+.top_text{
+    position: absolute;
+    top:-20px;
+    left:auto;
+    right: auto;
+
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    color: white;
+}
+
+.vault_display{
+    position: relative;
+    width:100px;
+    height: 100px;
+    border-left:1px solid black;
+    border-bottom:1px solid black;
+}
+
+.vault_line{
+    position:absolute;
+
+    margin: 0px;
+    padding: 0px;
+
+    top:90px;
+
+    width: 100px;
+    height: 20px;
+
+
+    background-image: url('../img/vault_img.png');
+
+    transform-origin: center left;
+    transition-duration: 1.0s;
+    transform: rotate(0.0deg);
+    transition-property: transform; 
+    transition-timing-function: linear;  
+}
+
+.vault_position_text{
+    position: absolute;
+    
+    right: 0;
+    top:0;
+    width: 40px;
+    border-bottom: 2px solid rgb(51, 51, 51);    
+}
+
+.vault_position_loader{
+    position: absolute;
+    right: 45px;
+    top:10px;
+
+    width: 10px;
+    height: 10px;
+
+    display: none;
+}
+
+.open_text{
+    
+    width: 100px;
+    height:20px;
+
+    position: absolute;
+
+    transform-origin: top left;
+    transform: rotate(90deg);
+
+    text-align:center;
+}
+
+.close_text{
+
+    width: 100px;
+    height:20px;
+
+    position: absolute;
+    bottom:-20px;
+
+    text-align:center;
+
+}
+.vault_setting_box{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+.vault_setting_row{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top:10px;
+}
+
+.vault_text{
+    width: fit-content;
+
+}
+
+.vault_number_input{
+    height: 25px;
+    border-radius: 5px;
+    width: 100px;
+}
+
+.vault_apply_btn, .vault_reset_btn{
+    height: 25px;
+    width: 100%;
+    background-color: rgb(71,71,71);
+    color:white;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+.vault_apply_btn:disabled, .vault_reset_btn:disabled{
+    background-color: rgb(121,121,121);
+}
+
+
+.vault_change_canvas{
+    background-color: rgb(216, 216, 216);
+    background-image: url('../img/loader.gif');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 30px 30px;
+    height: 40px;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.vault_card>.status_icon{
+    position: absolute;
+    right: 16px;
+    top:16px;
+
+    width: 32px;
+    height: 32px;
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 32px 32px;
+}
+
+.status_icon.ok{
+    background-image: url('../img/status_ok.png');
+}
+
+.status_icon.warn{
+    background-image: url('../img/status_warn.png');
+}
+
+.status_icon.updating{
+    background-image: url('../img/loader.gif');
+}

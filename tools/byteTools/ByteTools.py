@@ -5,7 +5,7 @@ def byte_reader(ser: serial.Serial, size = 10):
     buf = b''
     while True:
         res = ser.read()
-        print(res)
+        # print(res)
         if res:
             buf += res
             if len(buf) > 72:

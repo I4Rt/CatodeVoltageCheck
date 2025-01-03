@@ -78,4 +78,7 @@ def check_crc(package: bytes) -> bool:
 
 
 if __name__ == "__main__":
+    time = 29000
+    message = b'\x01' + b'\x01' + time.to_bytes(2, byteorder='big')
+    print(add_crc(message, reversed=True))
     pass
